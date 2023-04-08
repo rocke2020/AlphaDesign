@@ -11,14 +11,14 @@ def create_parser():
     parser = argparse.ArgumentParser()
     # Set-up parameters
     # /usr/data/gzy/SemiRetro/exp1_USPTO50k/part1_center_identification/results
-    parser.add_argument('--res_dir',default='/gaozhangyang/experiments/AlphaDesign/ex1_AlphaDesign/results',type=str)
+    parser.add_argument('--res_dir',default='/home/qcdong/codes/AlphaDesign/ex1_AlphaDesign/results', type=str)
     parser.add_argument('--ex_name', default='debug', type=str) 
     parser.add_argument('--gpu', default=7, type=int)
     parser.add_argument('--search',default=1,type=int)
     parser.add_argument('--method',default='AlphaDesign', choices=['NIPS19', 'GVP', 'GCA', 'AlphaDesign','SGNN'])
 
     # dataset parameters
-    parser.add_argument('--preprocess_path',default="/gaozhangyang/experiments/Protein_Design/dataset/preprocessed")
+    parser.add_argument('--preprocess_path',default="/mnt/sdd/bio_drug_corpus/AlphaDesign-gragh-transformer/preprocessed")
     parser.add_argument('--data_name', default='UP000000437_7955_DANRE_v2') 
     parser.add_argument('--batch_size',default=16,type=int,help='Batch size')
     parser.add_argument('--limit_length', default=1, type=int)

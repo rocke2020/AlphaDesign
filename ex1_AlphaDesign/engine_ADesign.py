@@ -13,7 +13,7 @@ import copy
 from src.utils.tools import cuda
 import warnings
 warnings.filterwarnings("ignore")
-
+from utils.log_util import logger
 
 
 def loss_nll(S, log_probs, mask):
@@ -41,6 +41,8 @@ class Exp:
         
         
         root = '/' + os.path.join(*self.path.split('/')[:-3])
+        logger.info('root %s', root)
+        logger.info('self.path %s', self.path)
         if self.args.method == 'NIPS19':
             shutil.rmtree(self.path+'/NIPS19',ignore_errors=True)
             shutil.copytree(root+'/src/NIPS19', self.path+'/NIPS19')
