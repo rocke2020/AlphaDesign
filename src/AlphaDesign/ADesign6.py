@@ -22,7 +22,7 @@ class NeighborAttention(nn.Module):
         self.num_heads = num_heads
         self.num_hidden = num_hidden
         self.edge_drop = edge_drop
-        
+
         self.W_Q = nn.Linear(num_hidden, num_hidden, bias=False)
         self.W_K = nn.Linear(num_in, num_hidden, bias=False)
         self.W_V = nn.Linear(num_in, num_hidden, bias=False)
@@ -40,11 +40,11 @@ class NeighborAttention(nn.Module):
         E = h_E.shape[0]
         n_heads = self.num_heads
         d = int(self.num_hidden / n_heads)
-        
-        w = self.Bias(torch.cat([h_V[center_id], h_E],dim=-1)).view(E, n_heads, 1) 
-        attend_logits = w/np.sqrt(d) 
 
-        V = self.W_V(h_E).view(-1, n_heads, d) 
+        w = self.Bias(torch.cat([h_V[center_id], h_E],dim=-1)).view(E, n_heads, 1)
+        attend_logits = w/np.sqrt(d)
+
+        V = self.W_V(h_E).view(-1, n_heads, d)
         attend = scatter_softmax(attend_logits, index=center_id, dim=0)
         h_V = scatter_sum(attend*V, center_id, dim=0).view([N, self.num_hidden])
 
@@ -73,7 +73,7 @@ class GNNModule(nn.Module):
         dh = self.dense(h_V)
         h_V = self.norm[1](h_V + self.dropout(dh))
         return h_V
-    
+
 class StructureEncoder(nn.Module):
     def __init__(self,  hidden_dim, num_encoder_layers=3, dropout=0):
         """ Graph labeling network """
@@ -92,7 +92,7 @@ class StructureEncoder(nn.Module):
         for (layer1, layer2) in self.encoder_layers:
             h_EV_local = torch.cat([h_P, h_V[P_idx[1]]], dim=1)
             h_V = layer1(h_V, h_EV_local, P_idx, batch_id)
-            
+
             h_EV_global = torch.cat([h_P, h_V[P_idx[1]]], dim=1)
             h_V = h_V + layer2(h_V, h_EV_global, P_idx, batch_id)
         return h_V
@@ -122,7 +122,7 @@ def positionalencoding1d(d_model, length):
 class CNNDecoder(nn.Module):
     def __init__(self,hidden_dim, input_dim, vocab=20):
         super().__init__()
-        
+
         # self.PosEnc = nn.Sequential(nn.Linear(20,hidden_dim),
         #                             nn.BatchNorm1d(hidden_dim),
         #                             nn.ReLU(),
@@ -130,7 +130,7 @@ class CNNDecoder(nn.Module):
         #                             nn.BatchNorm1d(hidden_dim),
         #                             nn.ReLU(),
         #                             nn.Linear(hidden_dim,hidden_dim))
-        
+
         self.CNN = nn.Sequential(nn.Conv1d(input_dim, hidden_dim,5, padding=2),
                                    nn.BatchNorm1d(hidden_dim),
                                    nn.ReLU(),
@@ -140,7 +140,7 @@ class CNNDecoder(nn.Module):
                                    nn.Conv1d(hidden_dim, hidden_dim,5, padding=2))
 
         self.readout = nn.Linear(hidden_dim, vocab)
-    
+
     def forward(self, h_V, batch_id):
         # pos = self.PosEnc(pos)
         # h_V = torch.cat([h_V,pos],dim=-1)
@@ -154,7 +154,7 @@ class CNNDecoder2(nn.Module):
     def __init__(self,hidden_dim, input_dim, vocab=20):
         super().__init__()
         self.ConfNN = nn.Embedding(50, hidden_dim)
-        
+
         # self.PosEnc = nn.Sequential(nn.Linear(20,hidden_dim),
         #                             nn.BatchNorm1d(hidden_dim),
         #                             nn.ReLU(),
@@ -162,7 +162,7 @@ class CNNDecoder2(nn.Module):
         #                             nn.BatchNorm1d(hidden_dim),
         #                             nn.ReLU(),
         #                             nn.Linear(hidden_dim,hidden_dim))
-        
+
         self.CNN = nn.Sequential(nn.Conv1d(hidden_dim+input_dim, hidden_dim,5, padding=2),
                                    nn.BatchNorm1d(hidden_dim),
                                    nn.ReLU(),
@@ -172,7 +172,7 @@ class CNNDecoder2(nn.Module):
                                    nn.Conv1d(hidden_dim, hidden_dim,5, padding=2))
 
         self.readout = nn.Linear(hidden_dim, vocab)
-    
+
     def forward(self, h_V, logits, batch_id):
         eps = 1e-5
         L = h_V.shape[0]
@@ -181,7 +181,7 @@ class CNNDecoder2(nn.Module):
         Conf = Conf.long()
         Conf = torch.clamp(Conf, 0, 49)
         h_C = self.ConfNN(Conf)
-        
+
         # pos = self.PosEnc(pos)
         h_V = torch.cat([h_V,h_C],dim=-1)
         h_V = h_V.unsqueeze(0).permute(0,2,1)
@@ -192,8 +192,8 @@ class CNNDecoder2(nn.Module):
 
 
 class ADesign(nn.Module):
-    def __init__(self, node_features, edge_features, hidden_dim, 
-        num_encoder_layers=3, num_decoder_layers=3, vocab=20, 
+    def __init__(self, node_features, edge_features, hidden_dim,
+        num_encoder_layers=3, num_decoder_layers=3, vocab=20,
         k_neighbors=30, dropout=0.1, **kwargs):
         """ Graph labeling network """
         super(ADesign, self).__init__()
@@ -219,9 +219,9 @@ class ADesign(nn.Module):
             nn.BatchNorm1d(hidden_dim),
             nn.Linear(hidden_dim, hidden_dim, bias=True)
         )
-        
-        
-        self.W_e = nn.Linear(edge_features, hidden_dim, bias=True) 
+
+
+        self.W_e = nn.Linear(edge_features, hidden_dim, bias=True)
         self.W_f = nn.Linear(edge_features, hidden_dim, bias=True)
 
         self.encoder = StructureEncoder(hidden_dim, num_decoder_layers, dropout)
@@ -229,17 +229,17 @@ class ADesign(nn.Module):
         self.decoder = CNNDecoder(hidden_dim, hidden_dim)
         self.decoder2 = CNNDecoder2(hidden_dim, hidden_dim)
         self._init_params()
-    
+
     def forward(self, h_V, h_P, P_idx, batch_id):
         h_V = self.W_v(self.norm_nodes(self.node_embedding(h_V)))
         h_P = self.W_e(self.norm_edges(self.edge_embedding(h_P)))
-        
+
         h_V = self.encoder(h_V, h_P, P_idx, batch_id)
         log_probs0, logits = self.decoder(h_V, batch_id)
-        
+
         log_probs, logits = self.decoder2(h_V, logits, batch_id)
         return log_probs, log_probs0
-        
+
     def _init_params(self):
         for p in self.parameters():
             if p.dim() > 1:
@@ -253,11 +253,11 @@ class ADesign(nn.Module):
         D_max, _ = torch.max(D, -1, keepdim=True)
         D_adjust = D + (1. - mask_2D) * (D_max+1)
         D_neighbors, E_idx = torch.topk(D_adjust, min(top_k, D_adjust.shape[-1]), dim=-1, largest=False)
-        return D_neighbors, E_idx  
+        return D_neighbors, E_idx
 
     def _get_features(self, S, score, X, mask):
         mask_bool = (mask==1)
-        
+
         B, N, _,_ = X.shape
         X_ca = X[:,:,1,:]
         D_neighbors, E_idx = self._full_dist(X_ca, mask, 30) # TODO: change_k
@@ -269,7 +269,7 @@ class ADesign(nn.Module):
 
 
         # node feature
-        _V = _dihedrals(X) 
+        _V = _dihedrals(X)
         _V = torch.masked_select(_V, mask_bool.unsqueeze(-1)).reshape(-1,_V.shape[-1])
 
         # edge feature
@@ -278,7 +278,7 @@ class ADesign(nn.Module):
         mask_attend = (mask.unsqueeze(-1) * mask_attend) == 1 # 自身的mask*邻居节点的mask
         _E = torch.masked_select(_E, mask_attend.unsqueeze(-1)).reshape(-1,_E.shape[-1])
 
-        
+
         # edge index
         shift = mask.sum(dim=1).cumsum(dim=0) - mask.sum(dim=1)
         src = shift.view(B,1,1) + E_idx
@@ -286,7 +286,7 @@ class ADesign(nn.Module):
         dst = shift.view(B,1,1) + torch.arange(0, N, device=src.device).view(1,-1,1).expand_as(mask_attend)
         dst = torch.masked_select(dst, mask_attend).view(1,-1)
         E_idx = torch.cat((dst, src), dim=0).long()
-        
+
         # 3D point
         sparse_idx = mask.nonzero()
         X = X[sparse_idx[:,0],sparse_idx[:,1],:,:]
