@@ -5,6 +5,8 @@ from torch.utils import data as torch_data
 import _pickle as cPickle
 import json
 import random
+from utils.log_util import logger
+
 
 class cached_property(object):
     """
@@ -68,7 +70,7 @@ class AlphaFold(torch_data.Dataset):
                     data.append(temp)
             else:
                 data.append(temp)
-        
+        # data[0] is a dict with keys(): 'title', 'seq', 'CA', 'C', 'O', 'N', 'score'
         if self.limit_length:
             split_name = 'split'
         else:
@@ -88,7 +90,6 @@ class AlphaFold(torch_data.Dataset):
             json.dump(split, open(preprocess_path+'/{}.json'.format(split_name),'w'))
         else:
             split = json.load(open(preprocess_path+'/{}.json'.format(split_name),'r'))
-        
         data_dict = {'train':[ data[i] for i in split['train'] ],
                      'valid':[ data[i] for i in split['valid'] ],
                      'test':[ data[i] for i in split['test'] ]}

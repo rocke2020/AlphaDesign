@@ -51,6 +51,7 @@ class StandardScaler():
 
 
 from collections.abc import Mapping, Sequence
+
 def cuda(obj, *args, **kwargs):
     """
     Transfer any nested conatiner of tensors to CUDA.

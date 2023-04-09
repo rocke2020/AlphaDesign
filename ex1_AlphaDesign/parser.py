@@ -19,7 +19,7 @@ def create_parser():
 
     # dataset parameters
     parser.add_argument('--preprocess_path',default="/mnt/sdd/bio_drug_corpus/AlphaDesign-gragh-transformer/preprocessed")
-    parser.add_argument('--data_name', default='UP000000437_7955_DANRE_v2') 
+    parser.add_argument('--data_name', default='UP000002296_353153_TRYCC_v2') 
     parser.add_argument('--batch_size',default=16,type=int,help='Batch size')
     parser.add_argument('--limit_length', default=1, type=int)
     parser.add_argument('--joint_data', default=0, type=int)

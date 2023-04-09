@@ -39,7 +39,6 @@ class Exp:
         for file in files:
             copyfile('/' + os.path.join(*self.path.split('/')[:-2]) + '/{}'.format(file), self.path +'/{}'.format(file))
         
-        
         root = '/' + os.path.join(*self.path.split('/')[:-3])
         logger.info('root %s', root)
         logger.info('self.path %s', self.path)
@@ -67,15 +66,7 @@ class Exp:
         with open(sv_param, 'w') as file_obj:
             json.dump(self.args.__dict__, file_obj)
 
-        for handler in logging.root.handlers[:]:
-            logging.root.removeHandler(handler)
-        logging.basicConfig(level=logging.INFO,#控制台打印的日志级别
-                            filename=self.path+'/log.log',#'log/{}_{}_{}.log'.format(args.gcn_type,args.graph_type,args.order_list)
-                            filemode='a',##模式，有w和a，w就是写模式，每次都会重新写日志，覆盖之前的日志
-                            #a是追加模式，默认如果不写的话，就是追加模式
-                            format='%(asctime)s - %(message)s'#日志格式
-                            )
-        logging.info(args)
+        logger.info(args)
         self.get_data()
         self.model = self._build_model().to(self.device)
         
@@ -114,14 +105,14 @@ class Exp:
         args = self.args
         from alphfold_data import AlphaFold
         preprocess_path = os.path.join(args.preprocess_path, args.data_name)
+        logger.info('preprocess_path %s', preprocess_path)
         self.train_set = AlphaFold(preprocess_path, mode = 'train', limit_length=args.limit_length, joint_data=args.joint_data) 
         self.valid_set = copy.copy(self.train_set)
         self.valid_set.change_mode('valid')
         self.test_set = copy.copy(self.train_set)
         self.test_set.change_mode('test')
 
-        print('train:{}\tvalid:{}\ttest:{}'.format(len(self.train_set), len(self.valid_set), len(self.test_set)))
-        logging.info('train:{}\tvalid:{}\ttest:{}'.format(len(self.train_set), len(self.valid_set), len(self.test_set)))
+        logger.info('train:{}\tvalid:{}\ttest:{}'.format(len(self.train_set), len(self.valid_set), len(self.test_set)))
         
         if args.method == 'NIPS19' or args.method == 'SGNN':
             from alphfold_data import featurize_NIPS19 as collate_fn
@@ -206,24 +197,20 @@ class Exp:
                 train_loss.append(loss.item())
                 train_pbar.set_description('train loss: {:.4f}'.format(loss.item()))
                 
-                
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
                 model_optim.step()
                 self.scheduler.step()
-                
             
             if epoch % args.log_step == 0:
                 self._save(epoch)
                 with torch.no_grad():
                     perplexity = self.evaluate(self.test_loader,'valid')
 
-                print("Epoch: {0} | perplexity: {1:.7f}\n".format(epoch, perplexity))
-                logging.info("Epoch: {0} | perplexity: {1:.7f}\n".format(epoch, perplexity))
+                logger.info("Epoch: {0} | perplexity: {1:.7f}\n".format(epoch, perplexity))
                 early_stopping(perplexity, self.model, self.path)
 
             if early_stopping.early_stop:
-                print("Early stopping")
-                logging.info("Early stopping")
+                logger.info("Early stopping")
                 break
             
             torch.cuda.empty_cache()
@@ -274,7 +261,7 @@ class Exp:
         if name == 'test':
             recovery = self.sample_all(self.test_set)
             print('recovery:{}'.format(recovery))
-            logging.info("test recovery: {0:.7f}\n".format(recovery))
+            logger.info("test recovery: {0:.7f}\n".format(recovery))
             nni.report_final_result(recovery)
         return validation_perplexity
 

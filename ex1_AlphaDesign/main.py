@@ -2,11 +2,11 @@ import nni
 import os
 import sys
 sys.path.append(os.path.abspath('.'))
+from utils.log_util import logger
 from ex1_AlphaDesign.parser import create_parser
 import random
 import numpy as np
 import torch
-from utils.log_util import logger
 
 
 def SetSeed(seed,det=True):
